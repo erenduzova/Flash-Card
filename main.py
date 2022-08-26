@@ -4,17 +4,29 @@ import pandas
 import random
 
 BACKGROUND_COLOR = "#B1DDC6"
-
+CURR_WORD = {}
 
 # -------------------- READING DATA -------------------- #
 data = pandas.read_csv("data/french_words.csv")
 words_to_learn = data.to_dict(orient="records")
 
 
-def pick_word():
-    new_word = random.choice(words_to_learn)
-    canvas.itemconfigure(language_text, text="French")
-    canvas.itemconfigure(word_text, text=new_word["French"])
+# -------------------- NEW WORD -------------------- #
+def next_word():
+    global CURR_WORD, FLIP_TIMER
+    root.after_cancel(FLIP_TIMER)
+    CURR_WORD = random.choice(words_to_learn)
+    canvas.itemconfigure(curr_side, image=img_front)
+    canvas.itemconfigure(language_text, text="French", fill="black")
+    canvas.itemconfigure(word_text, text=CURR_WORD["French"], fill="black")
+    FLIP_TIMER = root.after(3000, func=flip_card)
+
+
+# -------------------- FLIP CARD -------------------- #
+def flip_card():
+    canvas.itemconfigure(curr_side, image=img_back)
+    canvas.itemconfigure(language_text, text="English", fill="white")
+    canvas.itemconfigure(word_text, text=CURR_WORD["English"], fill="white")
 
 
 # -------------------- UI SETUP -------------------- #
@@ -28,7 +40,7 @@ canvas.grid(row=0, column=0, columnspan=2)
 # Card images
 img_back = PhotoImage(file="images/card_back.png")
 img_front = PhotoImage(file="images/card_front.png")
-canvas.create_image(400, 263, image=img_front)
+curr_side = canvas.create_image(400, 263, image=img_front)
 
 # Canvas Text
 language_text = canvas.create_text(400, 150, font=("Ariel", 40, "italic"), text="Language")
@@ -36,14 +48,15 @@ word_text = canvas.create_text(400, 263, font=("Ariel", 60, "bold"), text="Word"
 
 # Right and Wrong Buttons
 image_right = PhotoImage(file="images/right.png")
-button_right = Button(image=image_right, highlightthickness=0, borderwidth=0, command=pick_word)
+button_right = Button(image=image_right, highlightthickness=0, borderwidth=0, command=next_word)
 button_right.grid(row=1, column=1)
 
 image_wrong = PhotoImage(file="images/wrong.png")
-button_wrong = Button(image=image_wrong, highlightthickness=0, borderwidth=0, command=pick_word)
+button_wrong = Button(image=image_wrong, highlightthickness=0, borderwidth=0, command=next_word)
 button_wrong.grid(row=1, column=0)
 
 # First Word
-pick_word()
+next_word()
+FLIP_TIMER = root.after(3000, func=flip_card)
 
 root.mainloop()
